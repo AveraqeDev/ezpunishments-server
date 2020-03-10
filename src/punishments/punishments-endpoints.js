@@ -12,8 +12,7 @@ punishmentsRouter
     const newPunishment = { name, reason, proof, punished_by, expires };
 
     for (const [key, value] of Object.entries(newPunishment))
-      // eslint-disable-next-line eqeqeq
-      if (value == null)
+      if (value === null)
         return res.status(400).json({
           error: `Missing '${key}' in request body`
         });

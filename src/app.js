@@ -9,6 +9,7 @@ const app = express();
 
 const punishmentsRouter = require('./punishments/punishments-endpoints');
 const usersRouter = require('./users/users-router');
+const authRouter = require('./auth/auth-router');
 
 const morganOption = (NODE_ENV === 'production')
   ? 'tiny'
@@ -20,6 +21,7 @@ app.use(cors());
 
 app.use('/api/punishments', punishmentsRouter);
 app.use('/api/users', usersRouter);
+app.use('/api/auth', authRouter);
 
 app.use((error, req, res, next) => {
   let response;
