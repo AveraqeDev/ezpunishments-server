@@ -28,6 +28,39 @@ punishmentsRouter
           .json(PunishmentsService.serializePunishment(punishment));
       })
       .catch(next);
+  })
+  .get((req, res, next) => {
+    PunishmentsService.getAllPunishments(req.app.get('db'))
+      .then(punishments => {
+        res.json(PunishmentsService.serializePunishments(punishments));
+      })
+      .catch(next);
   });
+
+punishmentsRouter
+  .route('/:punishmentId')
+  .all(checkPunishmentExists)
+  .get((req, res) => {
+    res.json(PunishmentsService.serializePunishment(res.punishment));
+  });
+
+async function checkPunishmentExists(req, res, next) {
+  try {
+    const punishment = await PunishmentsService.getById(
+      req.app.get('db'),
+      req.params.punishmentId
+    );
+
+    if(!punishment)
+      res.status(404).json({
+        error: 'Punishment doesn\'t exist'
+      });
+    
+    res.punishment = punishment;
+    next();
+  } catch(error) {
+    next(error);
+  }
+}
 
 module.exports = punishmentsRouter;

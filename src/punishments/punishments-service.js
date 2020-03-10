@@ -3,9 +3,9 @@ const xss = require('xss');
 const PunishmentsService = {
   getById(db, id) {
     return db
-      .from('ezpunishments_punishments AS punish')
+      .from('ezpunishments_punishments')
       .select('*')
-      .where('punish.id', id)
+      .where({ id })
       .first();
   },
 
@@ -16,6 +16,16 @@ const PunishmentsService = {
       .returning('*')
       .then(([punishment]) => punishment)
       .then(punishment => PunishmentsService.getById(db, punishment.id));
+  },
+
+  getAllPunishments(db) {
+    return db
+      .from('ezpunishments_punishments')
+      .select('*');
+  },
+
+  serializePunishments(punishments) {
+    return punishments.map(this.serializePunishment);
   },
 
   serializePunishment(punishment) {
