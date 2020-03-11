@@ -49,6 +49,13 @@ usersRouter
           });
       })
       .catch(next);
+  })
+  .get('/', (req, res, next) => {
+    UsersService.getAllUsers(req.app.get('db'))
+      .then(users => {
+        res.json(UsersService.serializeUsers(users));
+      })
+      .catch(next);
   });
 
 module.exports = usersRouter;

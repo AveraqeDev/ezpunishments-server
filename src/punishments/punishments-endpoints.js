@@ -42,6 +42,36 @@ punishmentsRouter
   .all(checkPunishmentExists)
   .get((req, res) => {
     res.json(PunishmentsService.serializePunishment(res.punishment));
+  })
+  .patch(jsonBodyParser, (req, res, next) => {
+    const { reason, proof, punished_by, active, expires } = req.body;
+    const punishmentToUpdate = { reason, proof, punished_by, active, expires };
+
+    const numberofValues = Object.values(punishmentToUpdate).filter(Boolean).length;
+    if(numberofValues === 0) {
+      return res.status(400).json({
+        error: 'Request body must contain either "reason", "proof", "punished_by", "active", or "expires"'
+      });
+    }
+
+    PunishmentsService.updatePunishment(
+      req.app.get('db'),
+      req.params.punishmentId,
+      punishmentToUpdate
+    )
+      .then(numRowsAffected => {
+        if(numRowsAffected > 0) {
+          return PunishmentsService.getById(
+            req.app.get('db'),
+            req.params.punishmentId
+          )
+            .then(punishment => res.status(200).json(punishment))
+            .catch(next);
+        } else {
+          return res.status(304).end();
+        }
+      })
+      .catch(next);
   });
 
 async function checkPunishmentExists(req, res, next) {

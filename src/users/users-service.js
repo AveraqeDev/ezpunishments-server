@@ -4,6 +4,11 @@ const xss = require('xss');
 const REGEX_UPPER_LOWER_NUMBER_SPECIAL = /(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&])[\S]+/;
 
 const UsersService = {
+  getAllUsers(db) {
+    return db('ezpunishments_users')
+      .select('*');
+  },
+
   hasUserWithUserName(db, user_name) {
     return db('ezpunishments_users')
       .where({ user_name })
@@ -37,6 +42,10 @@ const UsersService = {
 
   hashPassword(password) {
     return bcrypt.hash(password, 12);
+  },
+
+  serializeUsers(users) {
+    return users.map(this.serializeUser);
   },
 
   serializeUser(user) {

@@ -24,6 +24,12 @@ const PunishmentsService = {
       .select('*');
   },
 
+  updatePunishment(db, id, newPunishmentFields) {
+    return db('ezpunishments_punishments')
+      .where('id', id)
+      .update(newPunishmentFields);
+  },
+
   serializePunishments(punishments) {
     return punishments.map(this.serializePunishment);
   },
