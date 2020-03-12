@@ -67,7 +67,7 @@ punishmentsRouter
             req.app.get('db'),
             req.params.punishmentId
           )
-            .then(punishment => res.status(200).json(punishment))
+            .then(punishment => res.status(200).json(PunishmentsService.serializePunishment(punishment)))
             .catch(next);
         } else {
           return res.status(304).end();

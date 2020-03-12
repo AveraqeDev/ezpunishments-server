@@ -9,6 +9,14 @@ const UsersService = {
       .select('*');
   },
 
+  getById(db, id) {
+    return db
+      .from('ezpunishments_users')
+      .select('*')
+      .where({ id })
+      .first();
+  },
+
   hasUserWithUserName(db, user_name) {
     return db('ezpunishments_users')
       .where({ user_name })
@@ -24,6 +32,12 @@ const UsersService = {
       .then(([user]) => user);
   },
   
+  updateUser(db, user_name, newUserFields) {
+    return db('ezpunishments_users')
+      .where({ user_name })
+      .update(newUserFields);
+  },
+
   validatePassword(password) {
     if (password.length < 8) {
       return 'Password be longer than 8 characters';
@@ -53,6 +67,7 @@ const UsersService = {
       id: user.id,
       email: xss(user.email),
       user_name: xss(user.user_name),
+      user_role: xss(user.user_role),
       date_created: new Date(user.date_created),
     };
   }
