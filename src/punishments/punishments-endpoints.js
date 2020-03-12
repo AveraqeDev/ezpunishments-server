@@ -44,15 +44,17 @@ punishmentsRouter
     res.json(PunishmentsService.serializePunishment(res.punishment));
   })
   .patch(jsonBodyParser, (req, res, next) => {
-    const { reason, proof, punished_by, active, expires } = req.body;
-    const punishmentToUpdate = { reason, proof, punished_by, active, expires };
+    const { reason, proof, punished_by, removed_by, active, expires, updated } = req.body;
+    const punishmentToUpdate = { reason, proof, punished_by, removed_by, active, expires };
 
     const numberofValues = Object.values(punishmentToUpdate).filter(Boolean).length;
     if(numberofValues === 0) {
       return res.status(400).json({
-        error: 'Request body must contain either "reason", "proof", "punished_by", "active", or "expires"'
+        error: 'Request body must contain either "reason", "proof", "punished_by", "removed_by", "active", or "expires"'
       });
     }
+
+    punishmentToUpdate.updated = updated;
 
     PunishmentsService.updatePunishment(
       req.app.get('db'),

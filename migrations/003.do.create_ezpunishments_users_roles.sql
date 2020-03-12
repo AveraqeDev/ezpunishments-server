@@ -1,4 +1,4 @@
-CREATE TYPE IF NOT EXISTS role_names AS ENUM (
+CREATE TYPE role_names AS ENUM (
   'admin',
   'staff',
   'member'
