@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const UsersService = require('./users-service');
+const PunishmentsService = require('../punishments/punishments-service');
 
 const usersRouter = express.Router();
 const jsonBodyParser = express.json();
@@ -86,6 +87,30 @@ usersRouter
   })
   .get((req, res) => {
     res.json(UsersService.serializeUser(res.user));
+  })
+
+usersRouter
+  .get('/:userId/punishments', (req, res, next) => {
+    const { user_name } = UsersService.getById(req.params.userId);
+    UsersService.getUserPunishments(
+      req.app.get('db'),
+      user_name
+    )
+      .then(punishments => {
+        res.json(PunishmentsService.serializePunishments(punishments));
+      })
+      .catch(next);
+  })
+  .get('/:userId/punishes', (req, res, next) => {
+    const { user_name } = UsersService.getById(req.params.userId);
+    UsersService.getPunishmentsByUser(
+      req.app.get('db'),
+      user_name
+    )
+      .then(punishments => {
+        res.json(PunishmentsService.serializePunishments(punishments));
+      })
+      .catch(next);
   });
 
 async function checkUserExists(req, res, next) {

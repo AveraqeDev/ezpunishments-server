@@ -38,6 +38,18 @@ const UsersService = {
       .update(newUserFields);
   },
 
+  getUserPunishments(db, user_name) {
+    return db('ezpunishments_punishments')
+      .select('*')
+      .where('name', user_name);
+  },
+
+  getPunishmentsByUser(db, user_name) {
+    return db('ezpunishments_punishments')
+      .select('*')
+      .where('punished_by', user_name);
+  },
+
   validatePassword(password) {
     if (password.length < 8) {
       return 'Password be longer than 8 characters';

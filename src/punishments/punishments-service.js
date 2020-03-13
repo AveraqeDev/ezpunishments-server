@@ -21,7 +21,8 @@ const PunishmentsService = {
   getAllPunishments(db) {
     return db
       .from('ezpunishments_punishments')
-      .select('*');
+      .select('*')
+      .orderBy('id');
   },
 
   updatePunishment(db, id, newPunishmentFields) {
