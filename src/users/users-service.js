@@ -17,6 +17,14 @@ const UsersService = {
       .first();
   },
 
+  getByName(db, user_name) {
+    return db
+      .from('ezpunishments_users')
+      .select('*')
+      .where({ user_name })
+      .first();
+  },
+
   hasUserWithUserName(db, user_name) {
     return db('ezpunishments_users')
       .where({ user_name })
@@ -32,9 +40,9 @@ const UsersService = {
       .then(([user]) => user);
   },
   
-  updateUser(db, user_name, newUserFields) {
+  updateUser(db, id, newUserFields) {
     return db('ezpunishments_users')
-      .where({ user_name })
+      .where({ id })
       .update(newUserFields);
   },
 
