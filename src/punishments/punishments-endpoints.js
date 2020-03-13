@@ -30,11 +30,19 @@ punishmentsRouter
       .catch(next);
   })
   .get((req, res, next) => {
-    PunishmentsService.getAllPunishments(req.app.get('db'))
-      .then(punishments => {
-        res.json(PunishmentsService.serializePunishments(punishments));
-      })
-      .catch(next);
+    if(req.query.recent) {
+      PunishmentsService.getRecentPunishments(req.app.get('db'))
+        .then(punishments => {
+          res.json(PunishmentsService.serializePunishments(punishments));
+        })
+        .catch(next);
+    } else {
+      PunishmentsService.getAllPunishments(req.app.get('db'))
+        .then(punishments => {
+          res.json(PunishmentsService.serializePunishments(punishments));
+        })
+        .catch(next);
+    }
   });
 
 punishmentsRouter

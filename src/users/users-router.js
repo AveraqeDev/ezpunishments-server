@@ -90,8 +90,8 @@ usersRouter
   })
 
 usersRouter
-  .get('/:userId/punishments', (req, res, next) => {
-    const { user_name } = UsersService.getById(req.params.userId);
+  .get('/:userId/punishments', checkUserExists, (req, res, next) => {
+    const { user_name } = res.user;
     UsersService.getUserPunishments(
       req.app.get('db'),
       user_name
@@ -101,8 +101,8 @@ usersRouter
       })
       .catch(next);
   })
-  .get('/:userId/punishes', (req, res, next) => {
-    const { user_name } = UsersService.getById(req.params.userId);
+  .get('/:userId/punishes', checkUserExists, (req, res, next) => {
+    const { user_name } = res.user;
     UsersService.getPunishmentsByUser(
       req.app.get('db'),
       user_name

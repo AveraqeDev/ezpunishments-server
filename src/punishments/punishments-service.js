@@ -25,6 +25,14 @@ const PunishmentsService = {
       .orderBy('id');
   },
 
+  getRecentPunishments(db) {
+    return db
+      .from('ezpunishments_punishments')
+      .select('*')
+      .orderBy('id', 'desc')
+      .limit(10);
+  },
+
   updatePunishment(db, id, newPunishmentFields) {
     return db('ezpunishments_punishments')
       .where('id', id)
