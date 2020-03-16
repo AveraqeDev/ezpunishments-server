@@ -4,20 +4,21 @@ const PasswordService = {
   getById(db, id) {
     return db
       .from('ezpunishments_reset_password')
-      .where({ user_id: id, status: 0 })
+      .where('user_id', id)
+      .andWhere('status', 0)
       .first();
   },
 
   insert(db, newPasswordReset) {
     return db
+      .into('ezpunishments_reset_password')
       .insert(newPasswordReset)
-      .into('ezpunishments_password_reset')
       .returning('*')
       .then(([resetPassword]) => resetPassword);
   },
 
   updateStatus(db, id) {
-    return db('ezpunishments_password_reset')
+    return db('ezpunishments_reset_password')
       .where({ id })
       .update({ status: 1 });
   },

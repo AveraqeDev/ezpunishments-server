@@ -1,7 +1,6 @@
 const express = require('express');
 const path = require('path');
 const moment = require('moment');
-const sendmail = require('sendmail');
 const bcrypt = require('bcryptjs');
 
 const config = require('../config');
@@ -9,6 +8,7 @@ const UsersService = require('./users-service');
 const PunishmentsService = require('../punishments/punishments-service');
 const PasswordService = require('./password-service');
 
+const sendMail = require('../mail/send-mail');
 const usersRouter = express.Router();
 const jsonBodyParser = express.json();
 
@@ -68,8 +68,7 @@ usersRouter
   
 usersRouter
   .route('/:userId')
-  .all(checkUserExists)
-  .patch(jsonBodyParser, (req, res, next) => {
+  .patch(jsonBodyParser, checkUserExists, (req, res, next) => {
     const { email, user_name, user_role } = req.body;
     const userToUpdate = { email, user_name, user_role };
 
@@ -91,7 +90,7 @@ usersRouter
       })
       .catch(next);
   })
-  .get((req, res) => {
+  .get(checkUserExists, (req, res) => {
     res.json(UsersService.serializeUser(res.user));
   });
 
@@ -118,7 +117,7 @@ usersRouter
       })
       .catch(next);
   })
-  .post('/resetpw', (req, res, next) => {
+  .post('/resetpw', jsonBodyParser, (req, res, next) => {
     const { user_name } = req.body;
 
     if(!user_name)
@@ -132,57 +131,58 @@ usersRouter
     )
       .then(user => {
         if(!user || !user.email) 
-          res.status(404).json({ error: 'Could not find email associated with given username' });
+          return res.status(404).json({ error: 'Could not find email associated with given username' });
 
         return PasswordService.getById(
           req.app.get('db'),
           user.id
         )
-          .then(resetPassword => {
-            if(resetPassword) {
-              PasswordService.destroy(
+          .then(reset => {
+            if(reset) {
+              PasswordService.updateStatus(
                 req.app.get('db'),
-                resetPassword.id
+                reset.id
               );
             }
             let token = PasswordService.generateToken(32);
 
             PasswordService.hashToken(token)
               .then(hashedToken => {
-                PasswordService.insert({
-                  user_id: user.id,
-                  hashedToken,
-                  expire: moment.utc().add(config.RESET_PASSWORD_EXPIRY, 'seconds')
-                })
+                PasswordService.insert(
+                  req.app.get('db'),
+                  {
+                    user_id: user.id,
+                    token: hashedToken,
+                    expire: moment.utc().add(config.RESET_PASSWORD_EXPIRY, 'seconds')
+                  })
                   .then(resetPassword => {
                     if(!resetPassword)
                       return res.status(500).json({ error: 'Oops problem creating new password record' });
 
                     let mailOptions = {
-                      from: '<matthew wagaman> averaqedev@gmail.com',
+                      from: 'averaqedev@gmail.com',
                       to: user.email,
                       subject: 'Reset your eZPunishments password',
                       html: '<h4>>b>Reset Password</b></h4>' +
                             '<p>To reset your password, complete this form:</p>' +
-                            '<a href="' + req.host + '/resetpw/' + user.id + '/' + token + '">' + 
-                            req.host + '/resetpw/' + user.id + '/' + token + '</a>' +
+                            '<a href="' + req.hostname + '/reset-password/' + user.id + '/' + token + '">' + 
+                            req.hostname + '/reset-password/' + user.id + '/' + token + '</a>' +
                                 '<br><br>' +
                                 '<p>--Team</p>'
                     };
                     
-                    let mailSent = sendmail(mailOptions);
-                    if(mailSent) {
-                      return res.json({success: true, message: 'Check your mail to reset your password.'});
-                    } else {
-                      return res.status(500).json({ error: 'Unable to send email.' });
-                    }
+                    sendMail(mailOptions)
+                      .then(() => {
+                        return res.json({ success: true });
+                      })
+                      .catch(next);
                   });
               });
           });
       })
       .catch(next);
   })
-  .post('/store-password', (req, res, next) => {
+  .post('/store-password', jsonBodyParser, (req, res, next) => {
     const { user_id, password, token } = req.body;
     
     PasswordService.getById(
@@ -190,19 +190,18 @@ usersRouter
       user_id
     )
       .then(resetPassword => {
-        if(!resetPassword) {
+        if(!resetPassword)
           return res.status(401).json({ error: 'Invalid or expired reset token.' });
-        }
         bcrypt.compare(token, resetPassword.token)
           .then(tokenMatch => {
             if(!tokenMatch)
               return res.status(401).json({ error: 'Invalid or expired reset token.' });
-            
             let expireTime = moment.utc(resetPassword.expire);
             let currentTime = new Date();
-            if(currentTime < expireTime)
+            if(currentTime > expireTime) {
+              console.log('Token expired');
               return res.status(401).json({ error: 'Invalid or expired reset token.' });
-
+            }
             UsersService.hashPassword(password)
               .then(hashedPassword => {
                 UsersService.updateUser(
