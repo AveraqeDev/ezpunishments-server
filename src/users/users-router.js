@@ -1,7 +1,13 @@
 const express = require('express');
 const path = require('path');
+const moment = require('moment');
+const sendmail = require('sendmail');
+const bcrypt = require('bcryptjs');
+
+const config = require('../config');
 const UsersService = require('./users-service');
 const PunishmentsService = require('../punishments/punishments-service');
+const PasswordService = require('./password-service');
 
 const usersRouter = express.Router();
 const jsonBodyParser = express.json();
@@ -112,12 +118,12 @@ usersRouter
       })
       .catch(next);
   })
-  .patch('/resetpw', (req, res, next) => {
+  .post('/resetpw', (req, res, next) => {
     const { user_name } = req.body;
 
     if(!user_name)
       return res.status(400).json({
-        error: `Missing '${user_name}' in request body`
+        error: 'Missing \'user_name\' in request body'
       });
 
     UsersService.getByName(
@@ -128,7 +134,92 @@ usersRouter
         if(!user || !user.email) 
           res.status(404).json({ error: 'Could not find email associated with given username' });
 
-        
+        return PasswordService.getById(
+          req.app.get('db'),
+          user.id
+        )
+          .then(resetPassword => {
+            if(resetPassword) {
+              PasswordService.destroy(
+                req.app.get('db'),
+                resetPassword.id
+              );
+            }
+            let token = PasswordService.generateToken(32);
+
+            PasswordService.hashToken(token)
+              .then(hashedToken => {
+                PasswordService.insert({
+                  user_id: user.id,
+                  hashedToken,
+                  expire: moment.utc().add(config.RESET_PASSWORD_EXPIRY, 'seconds')
+                })
+                  .then(resetPassword => {
+                    if(!resetPassword)
+                      return res.status(500).json({ error: 'Oops problem creating new password record' });
+
+                    let mailOptions = {
+                      from: '<matthew wagaman> averaqedev@gmail.com',
+                      to: user.email,
+                      subject: 'Reset your eZPunishments password',
+                      html: '<h4>>b>Reset Password</b></h4>' +
+                            '<p>To reset your password, complete this form:</p>' +
+                            '<a href="' + req.host + '/resetpw/' + user.id + '/' + token + '">' + 
+                            req.host + '/resetpw/' + user.id + '/' + token + '</a>' +
+                                '<br><br>' +
+                                '<p>--Team</p>'
+                    };
+                    
+                    let mailSent = sendmail(mailOptions);
+                    if(mailSent) {
+                      return res.json({success: true, message: 'Check your mail to reset your password.'});
+                    } else {
+                      return res.status(500).json({ error: 'Unable to send email.' });
+                    }
+                  });
+              });
+          });
+      })
+      .catch(next);
+  })
+  .post('/store-password', (req, res, next) => {
+    const { user_id, password, token } = req.body;
+    
+    PasswordService.getById(
+      req.app.get('db'),
+      user_id
+    )
+      .then(resetPassword => {
+        if(!resetPassword) {
+          return res.status(401).json({ error: 'Invalid or expired reset token.' });
+        }
+        bcrypt.compare(token, resetPassword.token)
+          .then(tokenMatch => {
+            if(!tokenMatch)
+              return res.status(401).json({ error: 'Invalid or expired reset token.' });
+            
+            let expireTime = moment.utc(resetPassword.expire);
+            let currentTime = new Date();
+            if(currentTime < expireTime)
+              return res.status(401).json({ error: 'Invalid or expired reset token.' });
+
+            UsersService.hashPassword(password)
+              .then(hashedPassword => {
+                UsersService.updateUser(
+                  req.app.get('db'),
+                  user_id,
+                  {
+                    password: hashedPassword
+                  }
+                )
+                  .then(() => {
+                    PasswordService.updateStatus(
+                      req.app.get('db'),
+                      resetPassword.id
+                    );
+                  });
+              });
+          });
       })
       .catch(next);
   });
