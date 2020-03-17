@@ -74,7 +74,6 @@ usersRouter
 
     const numberOfValues = Object.values(userToUpdate).filter(Boolean).length;
     if(numberOfValues === 0) {
-      console.log('missing required field');
       return res.status(400).json({
         error: 'Request body must contain either "email", "user_name", or "role"'
       });
@@ -163,9 +162,9 @@ usersRouter
                       from: 'averaqedev@gmail.com',
                       to: user.email,
                       subject: 'Reset your eZPunishments password',
-                      html: '<h4>>b>Reset Password</b></h4>' +
+                      html: '<h4><b>Reset Password</b></h4>' +
                             '<p>To reset your password, complete this form:</p>' +
-                            '<a href="' + req.hostname + '/reset-password/' + user.id + '/' + token + '">' + 
+                            '<a href="' + req.hostname + '/reset-password/' + user.id + '/' + token + '">http://' + 
                             req.hostname + '/reset-password/' + user.id + '/' + token + '</a>' +
                                 '<br><br>' +
                                 '<p>--Team</p>'
@@ -199,7 +198,6 @@ usersRouter
             let expireTime = moment.utc(resetPassword.expire);
             let currentTime = new Date();
             if(currentTime > expireTime) {
-              console.log('Token expired');
               return res.status(401).json({ error: 'Invalid or expired reset token.' });
             }
             UsersService.hashPassword(password)
