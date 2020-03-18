@@ -11,13 +11,15 @@ punishmentsRouter
   .route('/')
   .post(requireAuth, jsonBodyParser, (req, res, next) => {
     const { name, reason, proof, punished_by, expires } = req.body;
-    const newPunishment = { name, reason, proof, punished_by, expires };
+    const newPunishment = { name, reason, proof, punished_by };
 
     for (const [key, value] of Object.entries(newPunishment))
       if (value === null)
         return res.status(400).json({
           error: `Missing '${key}' in request body`
         });
+
+    newPunishment.expires = expires;
 
     PunishmentsService.insertPunishment(
       req.app.get('db'),
