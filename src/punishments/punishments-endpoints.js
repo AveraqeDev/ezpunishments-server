@@ -2,12 +2,14 @@ const express = require('express');
 const path = require('path');
 const PunishmentsService = require('./punishments-service');
 
+const { requireAuth } = require('../middleware/jwt-auth');
+
 const punishmentsRouter = express.Router();
 const jsonBodyParser = express.json();
 
 punishmentsRouter
   .route('/')
-  .post(jsonBodyParser, (req, res, next) => {
+  .post(requireAuth, jsonBodyParser, (req, res, next) => {
     const { name, reason, proof, punished_by, expires } = req.body;
     const newPunishment = { name, reason, proof, punished_by, expires };
 
@@ -47,7 +49,7 @@ punishmentsRouter
 
 punishmentsRouter
   .route('/:punishmentId')
-  .all(checkPunishmentExists)
+  .all(checkPunishmentExists, requireAuth)
   .get((req, res) => {
     res.json(PunishmentsService.serializePunishment(res.punishment));
   })

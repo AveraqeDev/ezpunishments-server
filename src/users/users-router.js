@@ -8,6 +8,8 @@ const UsersService = require('./users-service');
 const PunishmentsService = require('../punishments/punishments-service');
 const PasswordService = require('./password-service');
 
+const { requireAuth } = require('../middleware/jwt-auth');
+
 const sendMail = require('../mail/send-mail');
 const usersRouter = express.Router();
 const jsonBodyParser = express.json();
@@ -58,7 +60,7 @@ usersRouter
       })
       .catch(next);
   })
-  .get((req, res, next) => {
+  .get(requireAuth, (req, res, next) => {
     UsersService.getAllUsers(req.app.get('db'))
       .then(users => {
         res.json(UsersService.serializeUsers(users));
@@ -68,7 +70,7 @@ usersRouter
   
 usersRouter
   .route('/:userId')
-  .patch(jsonBodyParser, checkUserExists, (req, res, next) => {
+  .patch(requireAuth, jsonBodyParser, checkUserExists, (req, res, next) => {
     const { email, user_name, user_role } = req.body;
     const userToUpdate = { email, user_name, user_role };
 
@@ -89,12 +91,12 @@ usersRouter
       })
       .catch(next);
   })
-  .get(checkUserExists, (req, res) => {
+  .get(requireAuth, checkUserExists, (req, res) => {
     res.json(UsersService.serializeUser(res.user));
   });
 
 usersRouter
-  .get('/:userId/punishments', checkUserExists, (req, res, next) => {
+  .get('/:userId/punishments', requireAuth, checkUserExists, (req, res, next) => {
     const { user_name } = res.user;
     UsersService.getUserPunishments(
       req.app.get('db'),
@@ -105,7 +107,7 @@ usersRouter
       })
       .catch(next);
   })
-  .get('/:userId/punishes', checkUserExists, (req, res, next) => {
+  .get('/:userId/punishes', requireAuth, checkUserExists, (req, res, next) => {
     const { user_name } = res.user;
     UsersService.getPunishmentsByUser(
       req.app.get('db'),
