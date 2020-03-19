@@ -5,7 +5,6 @@ module.exports = {
   DATABASE_URL: process.env.DATABASE_URL || 'postgresql://ezpunishments@localhost/ezpunishments',
   // JWT Info
   JWT_SECRET: process.env.JWT_SECRET || 'change-this-secret',
-  JWT_EXPIRY: process.env.JWT_EXPIRY || '3m',
   // Password Reset Email OAuth
   RESET_PASSWORD_EXPIRY: process.env.RESET_PASSWORD_EXPIRY || '300',
   EMAIL_USER: process.env.EMAIL_USER,
