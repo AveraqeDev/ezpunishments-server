@@ -40,9 +40,9 @@ usersRouter
       });
 
     UsersService.hasUserWithUserName(
-        req.app.get('db'),
-        user_name
-      )
+      req.app.get('db'),
+      user_name
+    )
       .then(hasUserWithUserName => {
         if (hasUserWithUserName)
           return res.status(400).json({
@@ -58,9 +58,9 @@ usersRouter
             };
 
             return UsersService.insertUser(
-                req.app.get('db'),
-                newUser
-              )
+              req.app.get('db'),
+              newUser
+            )
               .then(user => {
                 res
                   .status(201)
@@ -102,10 +102,10 @@ usersRouter
     }
 
     UsersService.updateUser(
-        req.app.get('db'),
-        req.params.userId,
-        userToUpdate
-      )
+      req.app.get('db'),
+      req.params.userId,
+      userToUpdate
+    )
       .then(() => {
         return res.status(204).end();
       })
@@ -123,9 +123,9 @@ usersRouter
       user_name
     } = res.user;
     UsersService.getUserPunishments(
-        req.app.get('db'),
-        user_name
-      )
+      req.app.get('db'),
+      user_name
+    )
       .then(punishments => {
         res.json(PunishmentsService.serializePunishments(punishments));
       })
@@ -137,9 +137,9 @@ usersRouter
       user_name
     } = res.user;
     UsersService.getPunishmentsByUser(
-        req.app.get('db'),
-        user_name
-      )
+      req.app.get('db'),
+      user_name
+    )
       .then(punishments => {
         res.json(PunishmentsService.serializePunishments(punishments));
       })
@@ -157,9 +157,9 @@ usersRouter
       });
 
     UsersService.getByName(
-        req.app.get('db'),
-        user_name
-      )
+      req.app.get('db'),
+      user_name
+    )
       .then(user => {
         if (!user || !user.email)
           return res.status(404).json({
@@ -167,9 +167,9 @@ usersRouter
           });
 
         return PasswordService.getById(
-            req.app.get('db'),
-            user.id
-          )
+          req.app.get('db'),
+          user.id
+        )
           .then(reset => {
             if (reset) {
               PasswordService.updateStatus(
@@ -182,11 +182,11 @@ usersRouter
             PasswordService.hashToken(token)
               .then(hashedToken => {
                 PasswordService.insert(
-                    req.app.get('db'), {
-                      user_id: user.id,
-                      token: hashedToken,
-                      expire: moment.utc().add(config.RESET_PASSWORD_EXPIRY, 'seconds')
-                    })
+                  req.app.get('db'), {
+                    user_id: user.id,
+                    token: hashedToken,
+                    expire: moment.utc().add(config.RESET_PASSWORD_EXPIRY, 'seconds')
+                  })
                   .then(resetPassword => {
                     if (!resetPassword)
                       return res.status(500).json({
@@ -227,9 +227,9 @@ usersRouter
     } = req.body;
 
     PasswordService.getById(
-        req.app.get('db'),
-        user_id
-      )
+      req.app.get('db'),
+      user_id
+    )
       .then(resetPassword => {
         if (!resetPassword)
           return res.status(401).json({
@@ -251,11 +251,11 @@ usersRouter
             UsersService.hashPassword(password)
               .then(hashedPassword => {
                 UsersService.updateUser(
-                    req.app.get('db'),
-                    user_id, {
-                      password: hashedPassword
-                    }
-                  )
+                  req.app.get('db'),
+                  user_id, {
+                    password: hashedPassword
+                  }
+                )
                   .then(() => {
                     PasswordService.updateStatus(
                       req.app.get('db'),

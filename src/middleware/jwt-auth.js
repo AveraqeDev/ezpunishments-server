@@ -18,9 +18,9 @@ function requireAuth(req, res, next) {
     const payload = AuthService.vertifyJwt(bearerToken);
 
     AuthService.getUserWithUserName(
-        req.app.get('db'),
-        payload.sub
-      )
+      req.app.get('db'),
+      payload.sub
+    )
       .then(user => {
         if (!user) {
           console.log('no user');
@@ -34,7 +34,7 @@ function requireAuth(req, res, next) {
       .catch(error => {
         console.error(error);
         next(error);
-      })
+      });
   } catch (error) {
     console.error(error);
     return res.status(401).json({

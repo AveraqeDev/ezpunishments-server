@@ -27,9 +27,9 @@ authRouter
         });
 
     AuthService.getUserWithUserName(
-        req.app.get('db'),
-        loginUser.user_name
-      )
+      req.app.get('db'),
+      loginUser.user_name
+    )
       .then(dbUser => {
         if (!dbUser)
           return res.status(400).json({

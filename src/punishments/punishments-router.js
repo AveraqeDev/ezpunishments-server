@@ -37,9 +37,9 @@ punishmentsRouter
     newPunishment.expires = expires;
 
     PunishmentsService.insertPunishment(
-        req.app.get('db'),
-        newPunishment
-      )
+      req.app.get('db'),
+      newPunishment
+    )
       .then(punishment => {
         res
           .status(201)
@@ -106,16 +106,16 @@ punishmentsRouter
     punishmentToUpdate.updated = updated;
 
     PunishmentsService.updatePunishment(
-        req.app.get('db'),
-        req.params.punishmentId,
-        punishmentToUpdate
-      )
+      req.app.get('db'),
+      req.params.punishmentId,
+      punishmentToUpdate
+    )
       .then(numRowsAffected => {
         if (numRowsAffected > 0) {
           return PunishmentsService.getById(
-              req.app.get('db'),
-              req.params.punishmentId
-            )
+            req.app.get('db'),
+            req.params.punishmentId
+          )
             .then(punishment => res.status(200).json(PunishmentsService.serializePunishment(punishment)))
             .catch(next);
         } else {
