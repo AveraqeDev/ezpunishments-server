@@ -1,14 +1,18 @@
 const xss = require('xss');
 
 const PunishmentsService = {
+  //get a punishment by id
   getById(db, id) {
     return db
       .from('ezpunishments_punishments')
       .select('*')
-      .where({ id })
+      .where({
+        id
+      })
       .first();
   },
 
+  // insert a new punishment
   insertPunishment(db, newPunishment) {
     return db
       .insert(newPunishment)
@@ -18,6 +22,7 @@ const PunishmentsService = {
       .then(punishment => PunishmentsService.getById(db, punishment.id));
   },
 
+  // get all punishments
   getAllPunishments(db) {
     return db
       .from('ezpunishments_punishments')
@@ -25,6 +30,7 @@ const PunishmentsService = {
       .orderBy('id');
   },
 
+  // get last 10 punishments
   getRecentPunishments(db) {
     return db
       .from('ezpunishments_punishments')

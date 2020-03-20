@@ -8,36 +8,47 @@ const UsersService = require('./users-service');
 const PunishmentsService = require('../punishments/punishments-service');
 const PasswordService = require('./password-service');
 
-const { requireAuth } = require('../middleware/jwt-auth');
+const {
+  requireAuth
+} = require('../middleware/jwt-auth');
 
 const sendMail = require('../mail/send-mail');
 const usersRouter = express.Router();
 const jsonBodyParser = express.json();
 
+// Base users route endpoints
 usersRouter
   .route('/')
   .post(jsonBodyParser, (req, res, next) => {
-    const { email, user_name, password } = req.body;
-    
-    for(const field of ['email', 'user_name', 'password'])
-      if(!req.body[field])
+    const {
+      email,
+      user_name,
+      password
+    } = req.body;
+
+    for (const field of ['email', 'user_name', 'password'])
+      if (!req.body[field])
         return res.status(400).json({
           error: `Missing '${field}' in request body`
         });
 
     const passwordError = UsersService.validatePassword(password);
 
-    if(passwordError)
-      return res.status(400).json({ error: passwordError });
+    if (passwordError)
+      return res.status(400).json({
+        error: passwordError
+      });
 
     UsersService.hasUserWithUserName(
-      req.app.get('db'),
-      user_name
-    )
+        req.app.get('db'),
+        user_name
+      )
       .then(hasUserWithUserName => {
-        if(hasUserWithUserName)
-          return res.status(400).json({error: 'Username already taken' });
-        
+        if (hasUserWithUserName)
+          return res.status(400).json({
+            error: 'Username already taken'
+          });
+
         return UsersService.hashPassword(password)
           .then(hashedPassword => {
             const newUser = {
@@ -47,9 +58,9 @@ usersRouter
             };
 
             return UsersService.insertUser(
-              req.app.get('db'),
-              newUser
-            )
+                req.app.get('db'),
+                newUser
+              )
               .then(user => {
                 res
                   .status(201)
@@ -67,25 +78,34 @@ usersRouter
       })
       .catch(next);
   });
-  
+
+// users/userId endpoints
 usersRouter
   .route('/:userId')
-  .patch(requireAuth, jsonBodyParser, checkUserExists, (req, res, next) => {
-    const { email, user_name, user_role } = req.body;
-    const userToUpdate = { email, user_name, user_role };
+  .patch(requireAuth, checkUserExists, jsonBodyParser, (req, res, next) => {
+    const {
+      email,
+      user_name,
+      user_role
+    } = req.body;
+    const userToUpdate = {
+      email,
+      user_name,
+      user_role
+    };
 
     const numberOfValues = Object.values(userToUpdate).filter(Boolean).length;
-    if(numberOfValues === 0) {
+    if (numberOfValues === 0) {
       return res.status(400).json({
         error: 'Request body must contain either "email", "user_name", or "role"'
       });
     }
 
     UsersService.updateUser(
-      req.app.get('db'),
-      req.params.userId,
-      userToUpdate
-    )
+        req.app.get('db'),
+        req.params.userId,
+        userToUpdate
+      )
       .then(() => {
         return res.status(204).end();
       })
@@ -95,51 +115,63 @@ usersRouter
     res.json(UsersService.serializeUser(res.user));
   });
 
+// extra endpoints
 usersRouter
+  // get a users punishments
   .get('/:userId/punishments', requireAuth, checkUserExists, (req, res, next) => {
-    const { user_name } = res.user;
+    const {
+      user_name
+    } = res.user;
     UsersService.getUserPunishments(
-      req.app.get('db'),
-      user_name
-    )
+        req.app.get('db'),
+        user_name
+      )
       .then(punishments => {
         res.json(PunishmentsService.serializePunishments(punishments));
       })
       .catch(next);
   })
+  // get a users executed punishments
   .get('/:userId/punishes', requireAuth, checkUserExists, (req, res, next) => {
-    const { user_name } = res.user;
-    UsersService.getPunishmentsByUser(
-      req.app.get('db'),
+    const {
       user_name
-    )
+    } = res.user;
+    UsersService.getPunishmentsByUser(
+        req.app.get('db'),
+        user_name
+      )
       .then(punishments => {
         res.json(PunishmentsService.serializePunishments(punishments));
       })
       .catch(next);
   })
+  // request a password reset token
   .post('/resetpw', jsonBodyParser, (req, res, next) => {
-    const { user_name } = req.body;
+    const {
+      user_name
+    } = req.body;
 
-    if(!user_name)
+    if (!user_name)
       return res.status(400).json({
         error: 'Missing \'user_name\' in request body'
       });
 
     UsersService.getByName(
-      req.app.get('db'),
-      user_name
-    )
+        req.app.get('db'),
+        user_name
+      )
       .then(user => {
-        if(!user || !user.email) 
-          return res.status(404).json({ error: 'Could not find email associated with given username' });
+        if (!user || !user.email)
+          return res.status(404).json({
+            error: 'Could not find email associated with given username'
+          });
 
         return PasswordService.getById(
-          req.app.get('db'),
-          user.id
-        )
+            req.app.get('db'),
+            user.id
+          )
           .then(reset => {
-            if(reset) {
+            if (reset) {
               PasswordService.updateStatus(
                 req.app.get('db'),
                 reset.id
@@ -150,31 +182,34 @@ usersRouter
             PasswordService.hashToken(token)
               .then(hashedToken => {
                 PasswordService.insert(
-                  req.app.get('db'),
-                  {
-                    user_id: user.id,
-                    token: hashedToken,
-                    expire: moment.utc().add(config.RESET_PASSWORD_EXPIRY, 'seconds')
-                  })
+                    req.app.get('db'), {
+                      user_id: user.id,
+                      token: hashedToken,
+                      expire: moment.utc().add(config.RESET_PASSWORD_EXPIRY, 'seconds')
+                    })
                   .then(resetPassword => {
-                    if(!resetPassword)
-                      return res.status(500).json({ error: 'Oops problem creating new password record' });
+                    if (!resetPassword)
+                      return res.status(500).json({
+                        error: 'Oops problem creating new password record'
+                      });
 
                     let mailOptions = {
                       from: 'averaqedev@gmail.com',
                       to: user.email,
                       subject: 'Reset your eZPunishments password',
                       html: '<h4><b>Reset Password</b></h4>' +
-                            '<p>To reset your password, complete this form:</p>' +
-                            '<a href="' + req.hostname + '/reset-password/' + user.id + '/' + token + '">http://' + 
-                            req.hostname + '/reset-password/' + user.id + '/' + token + '</a>' +
-                                '<br><br>' +
-                                '<p>--Team</p>'
+                        '<p>To reset your password, complete this form:</p>' +
+                        '<a href="' + req.hostname + '/reset-password/' + user.id + '/' + token + '">http://' +
+                        req.hostname + '/reset-password/' + user.id + '/' + token + '</a>' +
+                        '<br><br>' +
+                        '<p>--Team</p>'
                     };
-                    
+
                     sendMail(mailOptions)
                       .then(() => {
-                        return res.json({ success: true });
+                        return res.json({
+                          success: true
+                        });
                       })
                       .catch(next);
                   });
@@ -183,34 +218,44 @@ usersRouter
       })
       .catch(next);
   })
+  // store user supdated password
   .post('/store-password', jsonBodyParser, (req, res, next) => {
-    const { user_id, password, token } = req.body;
-    
+    const {
+      user_id,
+      password,
+      token
+    } = req.body;
+
     PasswordService.getById(
-      req.app.get('db'),
-      user_id
-    )
+        req.app.get('db'),
+        user_id
+      )
       .then(resetPassword => {
-        if(!resetPassword)
-          return res.status(401).json({ error: 'Invalid or expired reset token.' });
+        if (!resetPassword)
+          return res.status(401).json({
+            error: 'Invalid or expired reset token.'
+          });
         bcrypt.compare(token, resetPassword.token)
           .then(tokenMatch => {
-            if(!tokenMatch)
-              return res.status(401).json({ error: 'Invalid or expired reset token.' });
+            if (!tokenMatch)
+              return res.status(401).json({
+                error: 'Invalid or expired reset token.'
+              });
             let expireTime = moment.utc(resetPassword.expire);
             let currentTime = new Date();
-            if(currentTime > expireTime) {
-              return res.status(401).json({ error: 'Invalid or expired reset token.' });
+            if (currentTime > expireTime) {
+              return res.status(401).json({
+                error: 'Invalid or expired reset token.'
+              });
             }
             UsersService.hashPassword(password)
               .then(hashedPassword => {
                 UsersService.updateUser(
-                  req.app.get('db'),
-                  user_id,
-                  {
-                    password: hashedPassword
-                  }
-                )
+                    req.app.get('db'),
+                    user_id, {
+                      password: hashedPassword
+                    }
+                  )
                   .then(() => {
                     PasswordService.updateStatus(
                       req.app.get('db'),
@@ -229,15 +274,15 @@ async function checkUserExists(req, res, next) {
       req.app.get('db'),
       req.params.userId
     );
-  
-    if(!user)
+
+    if (!user)
       res.status(404).json({
         error: 'User doesn\'t exist'
       });
-      
+
     res.user = user;
     next();
-  } catch(error) {
+  } catch (error) {
     next(error);
   }
 }

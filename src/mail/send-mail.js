@@ -2,6 +2,7 @@ const nodemailer = require('nodemailer');
 
 const config = require('../config');
 
+// send reset password email to user
 module.exports = function sendMail(options) {
   const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -17,7 +18,7 @@ module.exports = function sendMail(options) {
 
   return new Promise((resolve, reject) => {
     transporter.sendMail(options, error => {
-      if(error) {
+      if (error) {
         reject(error);
       } else {
         resolve();
