@@ -74,7 +74,7 @@ punishmentsRouter
   .all(checkPunishmentExists, requireAuth)
   // get a punishment by id
   .get((req, res) => {
-    res.json(PunishmentsService.serializePunishment(res.punishment));
+    res.status(200).json(PunishmentsService.serializePunishment(res.punishment));
   })
   // update a punishment in database
   .patch(jsonBodyParser, (req, res, next) => {
@@ -134,7 +134,7 @@ async function checkPunishmentExists(req, res, next) {
     );
 
     if (!punishment)
-      res.status(404).json({
+      return res.status(404).json({
         error: 'Punishment doesn\'t exist'
       });
 

@@ -152,15 +152,14 @@ function seedUsers(db, users) {
     });
 }
 
-function seedPunishmentsTables(db, users, punishments) {
-  db.transaction(async trx => {
-    await seedUsers(trx, users);
-    await trx.into('ezpunishments_punishments').insert(punishments);
-    await trx.raw(
-      'SELECT setval(\'ezpunishments_punishments_id_seq\', ?)',
-      [punishments[punishments.length - 1].id]
-    );
-  });
+function seedPunishmentsTable(db, punishments) {
+  return db.into('ezpunishments_punishments').insert(punishments)    
+    .then(() => {
+      db.raw(
+        'SELECT setval(\'ezpunishments_punishments_id_seq\', ?)',
+        [punishments[punishments.length-1].id]
+      );
+    });
 }
 
 function seedMaliciousPunishment(db, user, punishment) {
@@ -188,7 +187,7 @@ module.exports = {
   
   cleanTables,
   seedUsers,
-  seedPunishmentsTables,
+  seedPunishmentsTable,
   seedMaliciousPunishment,
   makeAuthHeader
 };

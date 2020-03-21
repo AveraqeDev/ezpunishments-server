@@ -2,7 +2,7 @@ const knex = require('knex');
 const app = require('../src/app');
 const helpers = require('./test-helpers');
 
-describe.only('Punishments Endpoints', function() {
+describe('Punishments Endpoints', function() {
   let db;
 
   const {
@@ -35,9 +35,8 @@ describe.only('Punishments Endpoints', function() {
 
     context('Given there are punishments in the database', () => {
       beforeEach('insert punishments', () =>
-        helpers.seedPunishmentsTables(
+        helpers.seedPunishmentsTable(
           db,
-          testUsers,
           testPunishments,
         )
       );
@@ -91,23 +90,26 @@ describe.only('Punishments Endpoints', function() {
       });
     });
 
-    // context('Given there are punishments in the database', () => {
-    //   beforeEach('insert punishments', () =>
-    //     helpers.seedPunishmentsTables(
-    //       db,
-    //       testUsers,
-    //       testPunishments,
-    //     )
-    //   );
+    context('Given there are punishments in the database', () => {
+      beforeEach('insert punishments', () => {
+        helpers.seedUsers(
+          db,
+          testUsers
+        );
+        helpers.seedPunishmentsTable(
+          db,
+          testPunishments
+        );
+      });
 
-    //   it('responds with 200 and the specified punishment', () => {
-    //     const punishmentId = 2;
-    //     return supertest(app)
-    //       .get(`/api/punishments/${punishmentId}`)
-    //       .set('Authorization', helpers.makeAuthHeader(testUsers[0]))
-    //       .expect(200, testPunishments[punishmentId - 1]);
-    //   });
-    // });
+      it('responds with 200 and the specified punishment', () => {
+        const punishmentId = 2;
+        return supertest(app)
+          .get(`/api/punishments/${punishmentId}`)
+          .set('Authorization', helpers.makeAuthHeader(testUsers[0]))
+          .expect(200, testPunishments[punishmentId - 1]);
+      });
+    });
 
     context('Given an XSS attack punishment', () => {
       const testUser = helpers.makeUsersArray()[1];
