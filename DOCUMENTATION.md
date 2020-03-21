@@ -1,4 +1,4 @@
-**Show Punishments**
+## **Show Punishments**
 
 Returns all punishments from database
 
@@ -46,7 +46,7 @@ Returns all punishments from database
                     },
                   ]
                  ` <br /> <br />
-**Post Punishment**
+## **Post Punishment**
 
 Adds a new punishment to the database
 
@@ -89,7 +89,7 @@ Adds a new punishment to the database
   * **Unauthorized**
     `{ "error": "Unauthorized request" }`<br /> <br />
 
-**Get Punishment**
+## **Get Punishment**
 
 Gets a specified punishment from the database
 
@@ -129,7 +129,7 @@ Gets a specified punishment from the database
   * **Not FOund**
     `{ "error": "Punishment doesn't exist" }`<br /> <br />
 
-**Update Punishment**
+## **Update Punishment**
 
 Updates a specified punishment in the DB
 
